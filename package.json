@@ -1,16 +1,16 @@
 {
-  "name": "GGJ2020",
+  "name": "re-pear_frontend",
   "description": "",
   "version": "0.0.1",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/n-esty/ggj2020.git"
+    "url": "https://github.com/n-esty/re-pear_frontend.git"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "homepage": "https://github.com/n-esty/ggj2020",
+  "homepage": "https://github.com/n-esty/re-pear_frontend",
   "dependencies": {
     "phaser": "^3.22.0"
   }
