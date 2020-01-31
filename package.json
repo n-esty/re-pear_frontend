@@ -1,0 +1,17 @@
+{
+  "name": "GGJ2020",
+  "description": "",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/n-esty/ggj2020.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "homepage": "https://github.com/n-esty/ggj2020",
+  "dependencies": {
+    "phaser": "^3.22.0"
+  }
+}
