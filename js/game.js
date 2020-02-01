@@ -1,13 +1,44 @@
 const socket = io('http://localhost:3000/game');
 var ghostPos = [];
-socket.emit('join room', "hello");
-socket.on('ghosts', function(ghosts){
-    for(i=0;i<ghosts.length;i++){
-        if(ghosts[i][1]){
-            var tempCoords = JSON.parse(ghosts[i][1]);
-            ghostPos[ghosts[i][0]]=[];
-            ghostPos[ghosts[i][0]].x = tempCoords[0];
-            ghostPos[ghosts[i][0]].y = tempCoords[1];
+var joinData = {};
+console.log(window.location.hash);
+joinData.room = false;
+if(window.location.hash){
+    var hashes = window.location.hash;
+    hashes = hashes.split('#');
+    var options = hashes[1].split("?");
+    for(i=0;i<options.length;i++){
+        joinData[options[i].split("=")[0]] = options[i].split("=")[1]; 
+    }
+}
+console.log(joinData);
+var clientId;
+var reset = false;
+socket.on('connected', function(data){
+    clientId = data.id;
+})
+socket.on('reset', function(data){
+    if(data.id == clientId){
+        console.log("player reset")
+        reset = true;
+    } else {
+        console.log("oponent reset")
+    }
+});
+socket.emit('join room', joinData);
+socket.on('ghosts', function(ghostData){
+    console.log(ghostData)
+    if(ghostData.player == clientId){
+        console.log("run ghosts")
+        for(i=0;i<ghostData.amount;i++){
+            console.log("ghost" + i);
+            var ghosts = ghostData.ghostBundle;
+            if(ghosts[i]){
+                var tempCoords = JSON.parse(ghosts[i][1]);
+                ghostPos[ghosts[i][0]]=[];
+                ghostPos[ghosts[i][0]].x = tempCoords[0];
+                ghostPos[ghosts[i][0]].y = tempCoords[1];
+            }
         }
     }
 });
@@ -60,7 +91,7 @@ function create() {
     this.physics.world.bounds.width = 800;
     this.physics.world.bounds.height = 600;
 
-    player = this.physics.add.sprite(200, 200, 'player'); 
+    player = this.physics.add.sprite(0, 0, 'player'); 
     player.setBounce(0.2); // our player will bounce from items
     player.setCollideWorldBounds(true); // don't go out of the map
     cursors = this.input.keyboard.createCursorKeys();
@@ -83,13 +114,17 @@ function update() {
             player.body.setVelocityY(-500); // jump up
         }
         if(keyA.isDown && Date.now()>lastReset+500){
-            console.log('reset')
-            ghost[amountOfGhosts] = this.add.graphics();
-            ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
-            ghost[amountOfGhosts].fillRect(0, 0, 40, 40);
-            amountOfGhosts++;
             socket.emit('reset', []);
             lastReset = Date.now();
+        }
+        if(reset){
+            reset = false;
+            ghost[amountOfGhosts] = this.add.graphics();
+            ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
+            ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
+            amountOfGhosts++;
+            player.x = 0;
+            player.y = 0;
         }
         // console.log(player.x + " - " + player.y);
         socket.emit('player move', JSON.stringify([player.x,player.y]));
@@ -97,9 +132,9 @@ function update() {
         //Controlling ghosts
         for(i=0;i<amountOfGhosts;i++){
             if(ghostPos[i]){
-                this.physics.arcade.moveToXY(ghost[i], ghostPos[i].x, ghostPos[i].y, 60, 50)
-                // ghost[i].x = ghostPos[i].x;
-                // ghost[i].y = ghostPos[i].y;
+                // ghost[i].moveToXY(ghost[i], ghostPos[i].x, ghostPos[i].y, 60, 50)
+                ghost[i].x = ghostPos[i].x;
+                ghost[i].y = ghostPos[i].y;
             }
         }
 
