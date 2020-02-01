@@ -1,8 +1,18 @@
-const socket = io('http://localhost:3000/game');
+//Initial vars
 var ghostPos = [];
 var joinData = {};
-console.log(window.location.hash);
 joinData.room = false;
+var clientId;
+var reset = false;
+var map;
+var player;
+var cursors;
+var text;
+var ghost = [];
+var lastReset = 0;
+var amountOfGhosts = 0;
+
+//Set join data from url
 if(window.location.hash){
     var hashes = window.location.hash;
     hashes = hashes.split('#');
@@ -11,13 +21,22 @@ if(window.location.hash){
         joinData[options[i].split("=")[0]] = options[i].split("=")[1]; 
     }
 }
-console.log(joinData);
-var clientId;
-var reset = false;
-socket.on('connected', function(data){
-    clientId = data.id;
+
+// Connect to MP server
+const socket = io('http://localhost:3000/game');
+
+// Join room on server
+// joinData.room decides room to join, default = create new room
+socket.emit('join room', joinData);
+
+// Get confirmation from server after joining and set server generated client id 
+socket.on('connected', function(clientData){
+    clientId = clientData.id;
 })
+
+// Listen for resets done by users in the room
 socket.on('reset', function(data){
+    // Checks if reset is done by player
     if(data.id == clientId){
         console.log("player reset")
         reset = true;
@@ -25,14 +44,16 @@ socket.on('reset', function(data){
         console.log("oponent reset")
     }
 });
-socket.emit('join room', joinData);
+
+// Listen for ghost data sent by server
 socket.on('ghosts', function(ghostData){
-    console.log(ghostData)
+    // Checks if ghost belongs to player
     if(ghostData.player == clientId){
-        console.log("run ghosts")
+        // Loop through all ghosts
         for(i=0;i<ghostData.amount;i++){
-            console.log("ghost" + i);
             var ghosts = ghostData.ghostBundle;
+            // Update local last known coordinates per ghost,
+            // Ingame ghosts get updated in update() to these last known values
             if(ghosts[i]){
                 var tempCoords = JSON.parse(ghosts[i][1]);
                 ghostPos[ghosts[i][0]]=[];
@@ -43,6 +64,8 @@ socket.on('ghosts', function(ghostData){
     }
 });
 
+
+// Phaser config
 var config = {
     type: Phaser.AUTO,
     width: 800,
@@ -61,45 +84,28 @@ var config = {
         update: update
     }
 };
- 
+
+// Init Phaser
 var game = new Phaser.Game(config);
  
-var map;
-var player;
-var cursors;
-var groundLayer, coinLayer;
-var text;
-var ghost = [];
+
  
 function preload() {
  
 }
  
 function create() {
-    // // load the map 
-    // map = this.make.tilemap({key: 'map'});
-
-    // // tiles for the ground layer
-    // var groundTiles = map.addTilesetImage('tiles');
-    // // create the ground layer
-    // groundLayer = map.createDynamicLayer('World', groundTiles, 0, 0);
-    // // the player will collide with this layer
-    // groundLayer.setCollisionByExclusion([-1]);
-    
-    // set the boundaries of our game world
-    
+    // Setting world bounds manually
     this.physics.world.bounds.width = 800;
     this.physics.world.bounds.height = 600;
 
+    // Create player
     player = this.physics.add.sprite(0, 0, 'player'); 
-    player.setBounce(0.2); // our player will bounce from items
     player.setCollideWorldBounds(true); // don't go out of the map
     cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
 }
 
-var lastReset = 0;
-var amountOfGhosts = 0;
 function update() {
         if (cursors.left.isDown) // if the left arrow key is down
         {
@@ -117,22 +123,27 @@ function update() {
             socket.emit('reset', []);
             lastReset = Date.now();
         }
+        // Run if reset is true by server message
         if(reset){
             reset = false;
+            // Create ghost object
             ghost[amountOfGhosts] = this.add.graphics();
             ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
             ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
             amountOfGhosts++;
+            // Reset player
             player.x = 0;
             player.y = 0;
         }
-        // console.log(player.x + " - " + player.y);
+        
+        // Constantly send player data to server
         socket.emit('player move', JSON.stringify([player.x,player.y]));
 
-        //Controlling ghosts
+        // Controlling ghosts
+        // Loop through ghosts
         for(i=0;i<amountOfGhosts;i++){
             if(ghostPos[i]){
-                // ghost[i].moveToXY(ghost[i], ghostPos[i].x, ghostPos[i].y, 60, 50)
+                // update ghost position to last received server ghost position
                 ghost[i].x = ghostPos[i].x;
                 ghost[i].y = ghostPos[i].y;
             }
