@@ -135,7 +135,66 @@ var game = new Phaser.Game(config);
 
  
 function preload() {
- 
+    this.load.path = 'Assets/';
+
+    //player anims preload:
+    for(i = 1; i <= 79; i++)
+    {
+        this.load.image("idle_" + i.toString().padStart(4, '0'), "PlayerAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 82; i <= 105; i++)
+    {
+        this.load.image("run_" + i.toString().padStart(4, '0'), "PlayerAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 108; i <= 124; i++)
+    {
+        this.load.image("jump_" + i.toString().padStart(4, '0'), "PlayerAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 125; i <= 138; i++)
+    {
+        this.load.image("fly_" + i.toString().padStart(4, '0'), "PlayerAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 153; i <= 189; i++)
+    {
+        this.load.image("fall_" + i.toString().padStart(4, '0'), "PlayerAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 190; i <= 203; i++)
+    {
+        this.load.image("falling_" + i.toString().padStart(4, '0'), "PlayerAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 217; i <= 274; i++)
+    {
+        this.load.image("bounce_" + i.toString().padStart(4, '0'), "PlayerAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    //ghost anims preload (very spooky!!):
+    for(i = 1; i <= 79; i++)
+    {
+        this.load.image("idle_ghost_" + i.toString().padStart(4, '0'), "GhostAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 82; i <= 105; i++)
+    {
+        this.load.image("run_ghost_" + i.toString().padStart(4, '0'), "GhostAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 108; i <= 124; i++)
+    {
+        this.load.image("jump_ghost_" + i.toString().padStart(4, '0'), "GhostAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 125; i <= 138; i++)
+    {
+        this.load.image("fly_ghost_" + i.toString().padStart(4, '0'), "GhostAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 153; i <= 189; i++)
+    {
+        this.load.image("fall_ghost_" + i.toString().padStart(4, '0'), "GhostAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 190; i <= 203; i++)
+    {
+        this.load.image("falling_ghost_" + i.toString().padStart(4, '0'), "GhostAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
+    for(i = 217; i <= 274; i++)
+    {
+        this.load.image("bounce_ghost_" + i.toString().padStart(4, '0'), "GhostAnims/" + i.toString().padStart(4, '0') + ".png");
+    }
 }
  
 function create() {
@@ -143,8 +202,15 @@ function create() {
     this.physics.world.bounds.width = 800;
     this.physics.world.bounds.height = 600;
 
+    createPlayerAnims(this);
+    createGhostAnims(this);
+
     // Create player
-    player = this.physics.add.sprite(0, 0, 'player'); 
+    player = this.physics.add.sprite(0, 0, 'player');//
+    player.play('bounce_ghost');
+    player.setSize(250,250);
+    player.setDisplaySize(250, 250);
+
     player.setCollideWorldBounds(true); // don't go out of the map
     cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -198,4 +264,192 @@ function update() {
             }
         }
 
+}
+
+function createPlayerAnims(obj)
+{
+    //create idle animation
+    var idleAnim = {
+        key: 'idle',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 1; i <= 79; i++)
+    {
+        idleAnim.frames.push({ key: "idle_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(idleAnim);
+
+    //create run animation
+    var runAnim = {
+        key: 'run',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 82; i <= 105; i++)
+    {
+        runAnim.frames.push({ key: "run_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(runAnim);
+
+    //create jump animation
+    var jumpAnim = {
+        key: 'jump',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 108; i <= 124; i++)
+    {
+        jumpAnim.frames.push({ key: "jump_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(jumpAnim);
+
+    //create fly animation
+    var flyAnim = {
+        key: 'fly',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 125; i <= 138; i++)
+    {
+        flyAnim.frames.push({ key: "fly_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(flyAnim);
+
+    //create fall animation
+    var fallAnim = {
+        key: 'fall',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 153; i <= 189; i++)
+    {
+        fallAnim.frames.push({ key: "fall_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(fallAnim);
+
+    //create falling animation
+    var fallingAnim = {
+        key: 'falling',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 190; i <= 203; i++)
+    {
+        fallingAnim.frames.push({ key: "falling_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(fallingAnim);
+
+    //create bounce animation
+    var bounceAnim = {
+        key: 'bounce',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 217; i <= 274; i++)
+    {
+        bounceAnim.frames.push({ key: "bounce_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(bounceAnim);
+}
+
+function createGhostAnims(obj)
+{
+    //create idle animation
+    var idleAnim = {
+        key: 'idle_ghost',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 1; i <= 79; i++)
+    {
+        idleAnim.frames.push({ key: "idle_ghost_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(idleAnim);
+
+    //create run animation
+    var runAnim = {
+        key: 'run_ghost',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 82; i <= 105; i++)
+    {
+        runAnim.frames.push({ key: "run_ghost_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(runAnim);
+
+    //create jump animation
+    var jumpAnim = {
+        key: 'jump_ghost',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 108; i <= 124; i++)
+    {
+        jumpAnim.frames.push({ key: "jump_ghost_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(jumpAnim);
+
+    //create fly animation
+    var flyAnim = {
+        key: 'fly_ghost',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 125; i <= 138; i++)
+    {
+        flyAnim.frames.push({ key: "fly_ghost_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(flyAnim);
+
+    //create fall animation
+    var fallAnim = {
+        key: 'fall_ghost',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 153; i <= 189; i++)
+    {
+        fallAnim.frames.push({ key: "fall_ghost_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(fallAnim);
+
+    //create falling animation
+    var fallingAnim = {
+        key: 'falling_ghost',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 190; i <= 203; i++)
+    {
+        fallingAnim.frames.push({ key: "falling_ghost_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(fallingAnim);
+
+    //create bounce animation
+    var bounceAnim = {
+        key: 'bounce_ghost',
+        frames: [],
+        frameRate: 60,
+        repeat: -1
+    }
+    for(i = 217; i <= 274; i++)
+    {
+        bounceAnim.frames.push({ key: "bounce_ghost_" + i.toString().padStart(4, '0')});
+    }
+    obj.anims.create(bounceAnim);
 }
