@@ -11,6 +11,9 @@ var text;
 var ghost = [];
 var lastReset = 0;
 var amountOfGhosts = 0;
+var groundMoveSpeed = 250;
+var airMoveSpeed = 150;
+var jumpHeight = 600;
 
 //Set join data from url
 if(window.location.hash){
@@ -163,58 +166,132 @@ function create() {
 
     // Create player
     player = this.physics.add.sprite(0, 0, 'player');//
-    player.play('bounce_ghost');
+    player.play('falling');
     player.setSize(250,250);
-    player.setDisplaySize(250, 250);
+    player.setDisplaySize(100, 100);
 
     player.setCollideWorldBounds(true); // don't go out of the map
     cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
 }
 
-function update() {
-        if (cursors.left.isDown) // if the left arrow key is down
-        {
-            player.body.setVelocityX(-200); // move left
-        }
-        else if (cursors.right.isDown) // if the right arrow key is down
-        {
-            player.body.setVelocityX(200); // move right
-        }
-        if ((cursors.space.isDown || cursors.up.isDown) && player.body.onFloor())
-        {
-            player.body.setVelocityY(-500); // jump up
-        }
-        if(keyA.isDown && Date.now()>lastReset+500){
-            socket.emit('reset', []);
-            lastReset = Date.now();
-        }
-        // Run if reset is true by server message
-        if(reset){
-            reset = false;
-            // Create ghost object
-            ghost[amountOfGhosts] = this.add.graphics();
-            ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
-            ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
-            amountOfGhosts++;
-            // Reset player
-            player.x = 0;
-            player.y = 0;
-        }
+function update() 
+{
+    if(!player.body.onFloor())
+    {
+        airMove();
+    }
+    else
+    {
+        groundMove();
+    }
+    
+    if(keyA.isDown && Date.now()>lastReset+500)
+    {
+        socket.emit('reset', []);
+        lastReset = Date.now();
+    }
+    // Run if reset is true by server message
+    if(reset){
+        reset = false;
+        // Create ghost object
+        ghost[amountOfGhosts] = this.add.graphics();
+        ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
+        ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
+        amountOfGhosts++;
+        // Reset player
+        player.x = 0;
+        player.y = 0;
+    }
         
-        // Constantly send player data to server
-        socket.emit('player move', JSON.stringify([player.x,player.y]));
+    // Constantly send player data to server
+    var playerData = {};
+    playerData.coords = [player.x,player.y];
+    playerData.anim = player.anims.currentAnim;
+    playerData.animFrame = player.anims.currentFrame.index;
+    playerData.isInteracting = false;
+    socket.emit('player move', playerData);
 
-        // Controlling ghosts
-        // Loop through ghosts
-        for(i=0;i<amountOfGhosts;i++){
-            if(ghostPos[i]){
-                // update ghost position to last received server ghost position
-                ghost[i].x = ghostPos[i].x;
-                ghost[i].y = ghostPos[i].y;
-            }
+    // Controlling ghosts
+    // Loop through ghosts
+    for(i=0;i<amountOfGhosts;i++){
+        if(ghostPos[i]){
+            // update ghost position to last received server ghost position
+            ghost[i].x = ghostPos[i].x;
+            ghost[i].y = ghostPos[i].y;
         }
+    }
+}
 
+function airMove()
+{
+    if(player.body.velocity.y < 0)
+    {
+        if(player.anims.currentFrame.index == player.anims.currentAnim.frames.length &&  player.anims.getCurrentKey() == "jump")
+        {
+            player.play("fly");
+        }
+    }
+    if(player.anims.getCurrentKey() == "fly" && player.body.velocity.y >=0)
+    {
+        player.play("fall");
+    }
+    if(player.body.velocity.y >=0 && (player.anims.currentFrame.index == player.anims.currentAnim.frames.length &&  player.anims.getCurrentKey() == "fall"))
+    {
+        player.play("falling");
+    }
+    if (cursors.left.isDown)
+    {
+        player.setFlipX(true);
+        player.body.setVelocityX(-airMoveSpeed);
+    }
+    else if (cursors.right.isDown)
+    {
+        player.setFlipX(false);
+        player.body.setVelocityX(airMoveSpeed);
+    }
+}
+
+function groundMove()
+{
+    if (cursors.left.isDown)
+    {
+        player.body.setVelocityX(-groundMoveSpeed);
+        player.setFlipX(true);
+        if(player.anims.getCurrentKey() != "run")
+        {
+            player.play("run");
+        }
+    }
+    else if (cursors.right.isDown)
+    {
+        player.body.setVelocityX(groundMoveSpeed);
+        player.setFlipX(false);
+        if(player.anims.getCurrentKey() != "run")
+        {
+            player.play("run");
+        }
+    }
+    else
+    {
+        if(player.anims.getCurrentKey() == "falling")
+        {
+            player.play("bounce");
+        }
+        else if(player.anims.getCurrentKey() != "idle" && player.anims.getCurrentKey() != "bounce")
+        {
+            player.play("idle");
+        }
+        if(player.anims.currentFrame.index == player.anims.currentAnim.frames.length &&  player.anims.getCurrentKey() == "bounce")
+        {
+            player.play("idle");
+        }
+    }
+    if (cursors.space.isDown || cursors.up.isDown)
+    {
+        player.body.setVelocityY(-jumpHeight);
+        player.play("jump");
+    }
 }
 
 function createPlayerAnims(obj)
@@ -250,7 +327,7 @@ function createPlayerAnims(obj)
         key: 'jump',
         frames: [],
         frameRate: 60,
-        repeat: -1
+        repeat: 0
     }
     for(i = 108; i <= 124; i++)
     {
@@ -276,7 +353,7 @@ function createPlayerAnims(obj)
         key: 'fall',
         frames: [],
         frameRate: 60,
-        repeat: -1
+        repeat: 0
     }
     for(i = 153; i <= 189; i++)
     {
@@ -302,7 +379,7 @@ function createPlayerAnims(obj)
         key: 'bounce',
         frames: [],
         frameRate: 60,
-        repeat: -1
+        repeat: 0
     }
     for(i = 217; i <= 274; i++)
     {
