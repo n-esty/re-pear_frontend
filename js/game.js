@@ -11,7 +11,10 @@ var text;
 var ghost = [];
 var lastReset = 0;
 var amountOfGhosts = 0;
-var ghostLimit = false;
+var groundMoveSpeed = 250;
+var airMoveSpeed = 150;
+var jumpHeight = 600;
+
 //Set join data from url
 if(window.location.hash){
     var hashes = window.location.hash;
@@ -32,7 +35,6 @@ socket.emit('join room', joinData);
 // Get confirmation from server after joining and set server generated client id 
 socket.on('connected', function(clientData){
     clientId = clientData.id;
-    document.getElementById('roomCode').innerHTML = clientData.room;
 })
 
 // Listen for resets done by users in the room
@@ -48,7 +50,6 @@ socket.on('reset', function(data){
 
 // Listen for ghost data sent by server
 socket.on('ghosts', function(ghostData){
-    console.log(ghostData);
     // Checks if ghost belongs to player
     if(ghostData.player == clientId){
         // Loop through all ghosts
@@ -66,48 +67,6 @@ socket.on('ghosts', function(ghostData){
     }
 });
 
-// Toggle ghosts
-function toggleGhosts(fromGhost){
-    console.log(fromGhost);
-    var htmlHolder = '';
-    for(i=0;i<amountOfGhosts;i++){
-        if(i<fromGhost){
-            htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost'>"+i+"</div>"
-        } else if(i===fromGhost) {
-            htmlHolder+="<div onclick='toggleGhostsOff(" + i + ")' class='btn-ghost dis'>"+i+"</div>"
-        } else {
-            htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost dis'>"+i+"</div>"
-        }
-        
-    }
-    document.getElementById('ghostButtons').innerHTML = htmlHolder;
-}
-
-function toggleGhostsOff(fromGhost){
-    var htmlHolder = "";
-    for(i=0;i<amountOfGhosts;i++){
-        htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost'>"+i+"</div>"
-    }
-    document.getElementById('ghostButtons').innerHTML = htmlHolder;
-}
-
-// Plain JS keyboard input
-
-
-document.addEventListener("keydown", keyPress);
-function keyPress(event)
-{
-   var keyId = event.keyCode;
-   switch(keyId)
-   {
-      case 8:
-
-      break;
-      default:
-      break;
-   }
-}
-
 
 // Phaser config
 var config = {
@@ -121,7 +80,6 @@ var config = {
             debug: false
         }
     },
-    parent: game,
     scene: {
         key: 'main',
         preload: preload,
@@ -133,7 +91,7 @@ var config = {
 // Init Phaser
 var game = new Phaser.Game(config);
  
-var loaded = false;
+
  
 function preload() {
     this.load.path = 'Assets/';
@@ -208,77 +166,132 @@ function create() {
 
     // Create player
     player = this.physics.add.sprite(0, 0, 'player');//
-    player.play('idle');
+    player.play('falling');
     player.setSize(250,250);
-    player.setDisplaySize(100,100);
-    player.setDepth(1000);
+    player.setDisplaySize(100, 100);
 
     player.setCollideWorldBounds(true); // don't go out of the map
     cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
 }
 
-function update() {
-        if (cursors.left.isDown) // if the left arrow key is down
-        {
-            player.body.setVelocityX(-200); // move left
-        }
-        else if (cursors.right.isDown) // if the right arrow key is down
-        {
-            player.body.setVelocityX(200); // move right
-        }
-        if ((cursors.space.isDown || cursors.up.isDown) && player.body.onFloor())
-        {
-            player.body.setVelocityY(-500); // jump up
-        }
-        if(keyA.isDown && Date.now()>lastReset+500){
-            socket.emit('reset', true);
-            lastReset = Date.now();
-        }
-        // Run if reset is true by server message
-        if(reset){
-            reset = false;
-            // Create ghost object
-            // ghost[amountOfGhosts] = this.add.graphics();
-            // ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
-            // ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
-            var aOG;
-            if(ghostLimit===false){
-                aOG = amountOfGhosts;
-            }else{
-                ghostLimit
-            }
-            ghost[amountOfGhosts] = this.physics.add.sprite(0, 0, 'ghost' + amountOfGhosts);//
-            ghost[amountOfGhosts].play('idle_ghost');
-            ghost[amountOfGhosts].setSize(250,250);
-            ghost[amountOfGhosts].setDisplaySize(100,100);
-            ghost[amountOfGhosts].body.moves = false
-            ghost[amountOfGhosts].alpha = 0.5;
-            amountOfGhosts++;
-            var htmlHolder = "";
-            for(i=0;i<amountOfGhosts;i++){
-                htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost'>"+i+"</div>"
-            }
-            document.getElementById('ghostButtons').innerHTML = htmlHolder;
-            // Reset player
-            player.x = 0;
-            player.y = 0;
-            
-        }
+function update() 
+{
+    if(!player.body.onFloor())
+    {
+        airMove();
+    }
+    else
+    {
+        groundMove();
+    }
+    
+    if(keyA.isDown && Date.now()>lastReset+500)
+    {
+        socket.emit('reset', []);
+        lastReset = Date.now();
+    }
+    // Run if reset is true by server message
+    if(reset){
+        reset = false;
+        // Create ghost object
+        ghost[amountOfGhosts] = this.add.graphics();
+        ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
+        ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
+        amountOfGhosts++;
+        // Reset player
+        player.x = 0;
+        player.y = 0;
+    }
         
-        // Constantly send player data to server
-        socket.emit('player move', JSON.stringify([player.x,player.y]));
+    // Constantly send player data to server
+    var playerData = {};
+    playerData.coords = [player.x,player.y];
+    playerData.anim = player.anims.currentAnim;
+    playerData.animFrame = player.anims.currentFrame.index;
+    playerData.isInteracting = false;
+    socket.emit('player move', playerData);
 
-        // Controlling ghosts
-        // Loop through ghosts
-        for(i=0;i<amountOfGhosts;i++){
-            if(ghostPos[i]){
-                // update ghost position to last received server ghost position
-                ghost[i].x = ghostPos[i].x;
-                ghost[i].y = ghostPos[i].y;
-            }
+    // Controlling ghosts
+    // Loop through ghosts
+    for(i=0;i<amountOfGhosts;i++){
+        if(ghostPos[i]){
+            // update ghost position to last received server ghost position
+            ghost[i].x = ghostPos[i].x;
+            ghost[i].y = ghostPos[i].y;
         }
+    }
+}
 
+function airMove()
+{
+    if(player.body.velocity.y < 0)
+    {
+        if(player.anims.currentFrame.index == player.anims.currentAnim.frames.length &&  player.anims.getCurrentKey() == "jump")
+        {
+            player.play("fly");
+        }
+    }
+    if(player.anims.getCurrentKey() == "fly" && player.body.velocity.y >=0)
+    {
+        player.play("fall");
+    }
+    if(player.body.velocity.y >=0 && (player.anims.currentFrame.index == player.anims.currentAnim.frames.length &&  player.anims.getCurrentKey() == "fall"))
+    {
+        player.play("falling");
+    }
+    if (cursors.left.isDown)
+    {
+        player.setFlipX(true);
+        player.body.setVelocityX(-airMoveSpeed);
+    }
+    else if (cursors.right.isDown)
+    {
+        player.setFlipX(false);
+        player.body.setVelocityX(airMoveSpeed);
+    }
+}
+
+function groundMove()
+{
+    if (cursors.left.isDown)
+    {
+        player.body.setVelocityX(-groundMoveSpeed);
+        player.setFlipX(true);
+        if(player.anims.getCurrentKey() != "run")
+        {
+            player.play("run");
+        }
+    }
+    else if (cursors.right.isDown)
+    {
+        player.body.setVelocityX(groundMoveSpeed);
+        player.setFlipX(false);
+        if(player.anims.getCurrentKey() != "run")
+        {
+            player.play("run");
+        }
+    }
+    else
+    {
+        if(player.anims.getCurrentKey() == "falling")
+        {
+            player.play("bounce");
+        }
+        else if(player.anims.getCurrentKey() != "idle" && player.anims.getCurrentKey() != "bounce")
+        {
+            player.play("idle");
+        }
+        if(player.anims.currentFrame.index == player.anims.currentAnim.frames.length &&  player.anims.getCurrentKey() == "bounce")
+        {
+            player.play("idle");
+        }
+    }
+    if (cursors.space.isDown || cursors.up.isDown)
+    {
+        player.body.setVelocityY(-jumpHeight);
+        player.play("jump");
+    }
 }
 
 function createPlayerAnims(obj)
@@ -314,7 +327,7 @@ function createPlayerAnims(obj)
         key: 'jump',
         frames: [],
         frameRate: 60,
-        repeat: -1
+        repeat: 0
     }
     for(i = 108; i <= 124; i++)
     {
@@ -340,7 +353,7 @@ function createPlayerAnims(obj)
         key: 'fall',
         frames: [],
         frameRate: 60,
-        repeat: -1
+        repeat: 0
     }
     for(i = 153; i <= 189; i++)
     {
@@ -366,7 +379,7 @@ function createPlayerAnims(obj)
         key: 'bounce',
         frames: [],
         frameRate: 60,
-        repeat: -1
+        repeat: 0
     }
     for(i = 217; i <= 274; i++)
     {
