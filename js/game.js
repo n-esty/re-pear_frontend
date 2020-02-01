@@ -103,8 +103,8 @@ function toggleGhostsOff(fromGhost){
 // Phaser config
 var config = {
     type: Phaser.AUTO,
-    width: 960,
-    height: 540,
+    width: 1300,
+    height: 700,
     scale: {
         parent: 'game',
         mode: Phaser.Scale.FIT
@@ -194,8 +194,8 @@ function preload() {
  
 function create() {
     // Setting world bounds manually
-    this.physics.world.bounds.width = 960;
-    this.physics.world.bounds.height = 540;
+    this.physics.world.bounds.width = 1300;
+    this.physics.world.bounds.height = 700;
 
 
 
