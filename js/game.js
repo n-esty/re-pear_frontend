@@ -14,6 +14,7 @@ var amountOfGhosts = 0;
 var groundMoveSpeed = 250;
 var airMoveSpeed = 150;
 var jumpHeight = 600;
+var ghostLimit = false;
 
 //Set join data from url
 if(window.location.hash){
@@ -35,6 +36,7 @@ socket.emit('join room', joinData);
 // Get confirmation from server after joining and set server generated client id 
 socket.on('connected', function(clientData){
     clientId = clientData.id;
+    document.getElementById('roomCode').innerHTML = clientData.room;
 })
 
 // Listen for resets done by users in the room
@@ -52,20 +54,49 @@ socket.on('reset', function(data){
 socket.on('ghosts', function(ghostData){
     // Checks if ghost belongs to player
     if(ghostData.player == clientId){
+        console.log(ghostData)
         // Loop through all ghosts
         for(i=0;i<ghostData.amount;i++){
             var ghosts = ghostData.ghostBundle;
             // Update local last known coordinates per ghost,
             // Ingame ghosts get updated in update() to these last known values
             if(ghosts[i]){
-                var tempCoords = JSON.parse(ghosts[i][1]);
+                var tempCoords = ghosts[i][1].coords;
                 ghostPos[ghosts[i][0]]=[];
+                ghostPos[ghosts[i][0]].anim = ghosts[i][1].anim;
+                ghostPos[ghosts[i][0]].flipX = ghosts[i][1].flipX;
+                ghostPos[ghosts[i][0]].frameIndex = ghosts[i][1].animFrame - 1;
                 ghostPos[ghosts[i][0]].x = tempCoords[0];
                 ghostPos[ghosts[i][0]].y = tempCoords[1];
             }
         }
     }
 });
+
+// Toggle ghosts
+function toggleGhosts(fromGhost){
+    console.log(fromGhost);
+    var htmlHolder = '';
+    for(i=0;i<amountOfGhosts;i++){
+        if(i<fromGhost){
+            htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost'>"+i+"</div>"
+        } else if(i===fromGhost) {
+            htmlHolder+="<div onclick='toggleGhostsOff(" + i + ")' class='btn-ghost dis'>"+i+"</div>"
+        } else {
+            htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost dis'>"+i+"</div>"
+        }
+        
+    }
+    document.getElementById('ghostButtons').innerHTML = htmlHolder;
+}
+
+function toggleGhostsOff(fromGhost){
+    var htmlHolder = "";
+    for(i=0;i<amountOfGhosts;i++){
+        htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost'>"+i+"</div>"
+    }
+    document.getElementById('ghostButtons').innerHTML = htmlHolder;
+}
 
 
 // Phaser config
@@ -195,13 +226,31 @@ function update()
     if(reset){
         reset = false;
         // Create ghost object
-        ghost[amountOfGhosts] = this.add.graphics();
-        ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
-        ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
+        // ghost[amountOfGhosts] = this.add.graphics();
+        // ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
+        // ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
+        var aOG;
+        if(ghostLimit===false){
+            aOG = amountOfGhosts;
+        }else{
+            ghostLimit
+        }
+        ghost[amountOfGhosts] = this.physics.add.sprite(0, 0, 'ghost' + amountOfGhosts);//
+        ghost[amountOfGhosts].play('idle_ghost');
+        ghost[amountOfGhosts].setSize(250,250);
+        ghost[amountOfGhosts].setDisplaySize(100,100);
+        ghost[amountOfGhosts].body.moves = false
+        ghost[amountOfGhosts].alpha = 0.5;
         amountOfGhosts++;
+        var htmlHolder = "";
+        for(i=0;i<amountOfGhosts;i++){
+            htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost'>"+i+"</div>"
+        }
+        document.getElementById('ghostButtons').innerHTML = htmlHolder;
         // Reset player
         player.x = 0;
         player.y = 0;
+        
     }
         
     // Constantly send player data to server
@@ -210,6 +259,7 @@ function update()
     playerData.anim = player.anims.currentAnim;
     playerData.animFrame = player.anims.currentFrame.index;
     playerData.isInteracting = false;
+    playerData.flipX = player.flipX;
     socket.emit('player move', playerData);
 
     // Controlling ghosts
@@ -219,6 +269,9 @@ function update()
             // update ghost position to last received server ghost position
             ghost[i].x = ghostPos[i].x;
             ghost[i].y = ghostPos[i].y;
+            ghost[i].play(ghostPos[i].anim.key + "_ghost");
+            ghost[i].anims.setCurrentFrame(ghost[i].anims.currentAnim.frames[ghostPos[i].frameIndex])
+            ghost[i].setFlipX(ghostPos[i].flipX);
         }
     }
 }

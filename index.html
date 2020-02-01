@@ -2,9 +2,62 @@
     <head>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
         <script src="node_modules/phaser/dist/phaser.min.js"></script>
+        <style>
+        html, body{
+            margin:0;
+            padding:0;
+        }
+        .btn-ghost{
+            display:inline-block;
+            width:30px;
+            height:40px;
+            padding:20px;
+            background-image: url('assets/ghost_icon.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            margin:5px;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 24px;
+            color: antiquewhite;
+            cursor:pointer;
+        }
+        #ghostButtons{
+            width:100%;
+            overflow-y:hidden;
+            overflow-x:auto;
+            height:80px;
+            background-color:rgb(143, 83, 48);
+            position:fixed;
+            bottom:0;
+        }
+        .dis{
+            opacity:0.3;
+        }
+        </style>
     </head>
     <body>
-        <script src="js/game.js"></script>
-        <script src="js/network_client.js"></script>
+        <!-- TOP -->
+        <div style="float:right;background-color:lightgray;padding:20px;margin-right:50px;"><h1 id="roomCode">Joining room...</h1>
+            <div>
+                <form>
+                    <input id="otherRoomId" type='text'>
+                    <button onclick='joinRoom()'>Join other room</button>
+                </form>
+            </div>
+        </div>
+        <!-- GAME -->
+        <div id="game">
+                <script src="js/game.js"></script>
+        </div>
+        <!-- BOTTOM -->
+        <div id="ghostButtons">
+        </div>
     </body>
+    <script>
+        function joinRoom(){
+            var otherRoomId = document.getElementById("otherRoomId").value;
+            window.location.href = 'index.html#room=' + otherRoomId;
+        }
+    </script>
 </html>
