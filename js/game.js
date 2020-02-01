@@ -11,7 +11,7 @@ var text;
 var ghost = [];
 var lastReset = 0;
 var amountOfGhosts = 0;
-
+var ghostLimit = false;
 //Set join data from url
 if(window.location.hash){
     var hashes = window.location.hash;
@@ -48,6 +48,7 @@ socket.on('reset', function(data){
 
 // Listen for ghost data sent by server
 socket.on('ghosts', function(ghostData){
+    console.log(ghostData);
     // Checks if ghost belongs to player
     if(ghostData.player == clientId){
         // Loop through all ghosts
@@ -132,7 +133,7 @@ var config = {
 // Init Phaser
 var game = new Phaser.Game(config);
  
-
+var loaded = false;
  
 function preload() {
     this.load.path = 'Assets/';
@@ -207,9 +208,10 @@ function create() {
 
     // Create player
     player = this.physics.add.sprite(0, 0, 'player');//
-    player.play('bounce_ghost');
+    player.play('idle');
     player.setSize(250,250);
-    player.setDisplaySize(250, 250);
+    player.setDisplaySize(100,100);
+    player.setDepth(1000);
 
     player.setCollideWorldBounds(true); // don't go out of the map
     cursors = this.input.keyboard.createCursorKeys();
@@ -230,16 +232,28 @@ function update() {
             player.body.setVelocityY(-500); // jump up
         }
         if(keyA.isDown && Date.now()>lastReset+500){
-            socket.emit('reset', []);
+            socket.emit('reset', true);
             lastReset = Date.now();
         }
         // Run if reset is true by server message
         if(reset){
             reset = false;
             // Create ghost object
-            ghost[amountOfGhosts] = this.add.graphics();
-            ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
-            ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
+            // ghost[amountOfGhosts] = this.add.graphics();
+            // ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
+            // ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
+            var aOG;
+            if(ghostLimit===false){
+                aOG = amountOfGhosts;
+            }else{
+                ghostLimit
+            }
+            ghost[amountOfGhosts] = this.physics.add.sprite(0, 0, 'ghost' + amountOfGhosts);//
+            ghost[amountOfGhosts].play('idle_ghost');
+            ghost[amountOfGhosts].setSize(250,250);
+            ghost[amountOfGhosts].setDisplaySize(100,100);
+            ghost[amountOfGhosts].body.moves = false
+            ghost[amountOfGhosts].alpha = 0.5;
             amountOfGhosts++;
             var htmlHolder = "";
             for(i=0;i<amountOfGhosts;i++){
@@ -249,6 +263,7 @@ function update() {
             // Reset player
             player.x = 0;
             player.y = 0;
+            
         }
         
         // Constantly send player data to server
