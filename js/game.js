@@ -14,6 +14,7 @@ var amountOfGhosts = 0;
 var groundMoveSpeed = 250;
 var airMoveSpeed = 150;
 var jumpHeight = 600;
+var grav = 900;
 var ghostLimit = false;
 
 //Set join data from url
@@ -107,7 +108,7 @@ var config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: {y: 900},
+            gravity: {y: grav},
             debug: false
         }
     },
@@ -192,23 +193,27 @@ function create() {
     this.physics.world.bounds.width = 800;
     this.physics.world.bounds.height = 600;
 
+
+
     createPlayerAnims(this);
     createGhostAnims(this);
 
     // Create player
-    player = this.physics.add.sprite(0, 0, 'player');//
+    player = this.physics.add.sprite(200, 200, 'player');//
     player.play('falling');
-    player.setSize(250,250);
+    player.setSize(150,250);
     player.setDisplaySize(100, 100);
 
     player.setCollideWorldBounds(true); // don't go out of the map
     cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+
+    buildLevel(this);
 }
 
 function update() 
 {
-    if(!player.body.onFloor())
+    if(!player.body.touching.down && !player.body.onFloor())
     {
         airMove();
     }
@@ -339,6 +344,7 @@ function groundMove()
         {
             player.play("idle");
         }
+        player.body.velocity.x = player.body.velocity.x*.1;
     }
     if (cursors.space.isDown || cursors.up.isDown)
     {
@@ -533,4 +539,23 @@ function createGhostAnims(obj)
         bounceAnim.frames.push({ key: "bounce_ghost_" + i.toString().padStart(4, '0')});
     }
     obj.anims.create(bounceAnim);
+}
+
+function buildLevel(obj)
+{
+    var platform = obj.physics.add.sprite(100, 450, 'asd');
+    platform.body.allowGravity = false;
+    platform.body.immovable = true;
+    platform.body.setFriction(1);
+    platform.setDisplaySize(800, 50);
+
+    var platform1 = obj.physics.add.sprite(100, 200, 'asd');
+    platform1.body.allowGravity = false;
+    platform1.body.immovable = true;
+    platform1.body.setFriction(1);
+    platform1.setDisplaySize(150, 20);
+
+
+    obj.physics.add.collider(player, platform);
+    obj.physics.add.collider(player, platform1);
 }
