@@ -32,6 +32,7 @@ socket.emit('join room', joinData);
 // Get confirmation from server after joining and set server generated client id 
 socket.on('connected', function(clientData){
     clientId = clientData.id;
+    document.getElementById('roomCode').innerHTML = clientData.room;
 })
 
 // Listen for resets done by users in the room
@@ -64,6 +65,48 @@ socket.on('ghosts', function(ghostData){
     }
 });
 
+// Toggle ghosts
+function toggleGhosts(fromGhost){
+    console.log(fromGhost);
+    var htmlHolder = '';
+    for(i=0;i<amountOfGhosts;i++){
+        if(i<fromGhost){
+            htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost'>"+i+"</div>"
+        } else if(i===fromGhost) {
+            htmlHolder+="<div onclick='toggleGhostsOff(" + i + ")' class='btn-ghost dis'>"+i+"</div>"
+        } else {
+            htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost dis'>"+i+"</div>"
+        }
+        
+    }
+    document.getElementById('ghostButtons').innerHTML = htmlHolder;
+}
+
+function toggleGhostsOff(fromGhost){
+    var htmlHolder = "";
+    for(i=0;i<amountOfGhosts;i++){
+        htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost'>"+i+"</div>"
+    }
+    document.getElementById('ghostButtons').innerHTML = htmlHolder;
+}
+
+// Plain JS keyboard input
+
+
+document.addEventListener("keydown", keyPress);
+function keyPress(event)
+{
+   var keyId = event.keyCode;
+   switch(keyId)
+   {
+      case 8:
+
+      break;
+      default:
+      break;
+   }
+}
+
 
 // Phaser config
 var config = {
@@ -77,6 +120,7 @@ var config = {
             debug: false
         }
     },
+    parent: game,
     scene: {
         key: 'main',
         preload: preload,
@@ -131,6 +175,11 @@ function update() {
             ghost[amountOfGhosts].fillStyle(0xffffff, 0.5);
             ghost[amountOfGhosts].fillRect(-18, -18, 36, 36);
             amountOfGhosts++;
+            var htmlHolder = "";
+            for(i=0;i<amountOfGhosts;i++){
+                htmlHolder+="<div onclick='toggleGhosts(" + i + ")' class='btn-ghost'>"+i+"</div>"
+            }
+            document.getElementById('ghostButtons').innerHTML = htmlHolder;
             // Reset player
             player.x = 0;
             player.y = 0;
