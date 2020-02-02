@@ -28,7 +28,7 @@ var buttonActivationRadius = 50;
 var buttons = [];
 var doors = [];
 var buttonStates = [];
-
+var level = 0;
 //Set join data from url
 if(window.location.hash){
     var hashes = window.location.hash;
@@ -36,6 +36,9 @@ if(window.location.hash){
     var options = hashes[1].split("?");
     for(i=0;i<options.length;i++){
         joinData[options[i].split("=")[0]] = options[i].split("=")[1]; 
+        if(options[i].split("=")[0] === "level"){
+            level = options[i].split("=")[1];
+        }
     }
 }
 
@@ -132,7 +135,7 @@ var game = new Phaser.Game(config);
  
 function preload() {
     this.load.path = 'Assets/';
-
+    this.load.image('bla', 'grey.jpg');
     //player anims preload:
     for(i = 1; i <= 79; i++)
     {
@@ -215,11 +218,27 @@ function create() {
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
 
-    buildLevel_0(this);
-    //buildLevel_1(this); 
-    //buildLevel_2(this); 
-    //buildLevel_3(this);
-
+    switch(level){
+        case 0:
+        case "0":
+            buildLevel_0(this);
+            break;
+        case 1:
+        case "1":
+            buildLevel_1(this);
+            break;
+        case 2:
+        case "2":
+            buildLevel_2(this);
+            break;
+        case 3:
+        case "3":
+            buildLevel_3(this);
+            break;
+        default:
+            buildLevel_0(this);
+            break;
+    }
     
     var btn1 = this.physics.add.sprite(100, 525, '');
     btn1.body.allowGravity = false;
@@ -740,7 +759,7 @@ function buildLevel_0(obj)
     platform1.body.allowGravity = false;
     platform1.body.immovable = true;
     platform1.body.setFriction(1);
-    platform1.setDisplaySize(300, 25); //size  
+    platform1.setDisplaySize(300, 25);
 
     var platform3 = obj.physics.add.sprite(1125, 550, 'asd');
     platform3.body.allowGravity = false;
