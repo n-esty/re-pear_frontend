@@ -12,8 +12,8 @@ var ghost = [];
 var lastReset = 0;
 var amountOfGhosts = 0;
 var groundMoveSpeed = 250;
-var airMoveSpeed = 150;
-var jumpHeight = 600;
+var airMoveSpeed = 130;
+var jumpHeight = 400;
 var grav = 900;
 var ghostLimit = false;
 
@@ -212,7 +212,10 @@ function create() {
     cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
 
-    buildLevel(this);
+    //buildLevel_0(this);
+    //buildLevel_1(this); 
+    buildLevel_2(this); 
+    buildLevel_3(this); 
 }
 
 function update() 
@@ -545,21 +548,225 @@ function createGhostAnims(obj)
     obj.anims.create(bounceAnim);
 }
 
-function buildLevel(obj)
+function buildLevel_0(obj)
 {
-    var platform = obj.physics.add.sprite(100, 450, 'asd');
+    //platforms
+    var platform = obj.physics.add.sprite(150, 550, 'asd');
     platform.body.allowGravity = false;
     platform.body.immovable = true;
     platform.body.setFriction(1);
-    platform.setDisplaySize(800, 50);
+    platform.setDisplaySize(300, 25);
 
-    var platform1 = obj.physics.add.sprite(100, 200, 'asd');
+    var platform1 = obj.physics.add.sprite(550, 550, 'asd'); //world space
     platform1.body.allowGravity = false;
     platform1.body.immovable = true;
     platform1.body.setFriction(1);
-    platform1.setDisplaySize(150, 20);
+    platform1.setDisplaySize(300, 25); //size  
 
+    var platform3 = obj.physics.add.sprite(1125, 550, 'asd');
+    platform3.body.allowGravity = false;
+    platform3.body.immovable = true;
+    platform3.body.setFriction(1);
+    platform3.setDisplaySize(350, 20);
 
+    //Temp ghost jump spots
+    var ghostJumpSpot = obj.physics.add.sprite(820, 580, 'asd'); 
+    ghostJumpSpot.body.allowGravity = false;
+    ghostJumpSpot.body.immovable = true;
+    ghostJumpSpot.body.setFriction(1);
+    ghostJumpSpot.setDisplaySize(50, 20);
+
+    //platforms
     obj.physics.add.collider(player, platform);
     obj.physics.add.collider(player, platform1);
+    obj.physics.add.collider(player, platform3);
+
+    //Temp ghost jumps
+    obj.physics.add.collider(player, ghostJumpSpot);
+}
+
+function buildLevel_1(obj)
+{
+    //temp platforms
+    var platform = obj.physics.add.sprite(650, 550, 'asd');
+    platform.body.allowGravity = false;
+    platform.body.immovable = true;
+    platform.body.setFriction(1);
+    platform.setDisplaySize(1300, 25);
+
+    //temp buttons
+    var tempButtonP1 = obj.physics.add.sprite(450, 525, 'asd'); //world space
+    tempButtonP1.body.allowGravity = false;
+    tempButtonP1.body.immovable = true;
+    tempButtonP1.body.setFriction(1);
+    tempButtonP1.setDisplaySize(30, 20); //size  
+    var tempButtonP2 = obj.physics.add.sprite(450, 520, 'asd'); //world space
+    tempButtonP2.body.allowGravity = false;
+    tempButtonP2.body.immovable = true;
+    tempButtonP2.body.setFriction(1);
+    tempButtonP2.setDisplaySize(50, 15); //size  
+
+    //temp gates
+    var tempGate = obj.physics.add.sprite(700, 260, 'asd');
+    tempGate.body.allowGravity = false;
+    tempGate.body.immovable = true;
+    tempGate.body.setFriction(1);
+    tempGate.setDisplaySize(20, 550);
+
+    //Temp ghost jump spots
+
+    //platforms
+    obj.physics.add.collider(player, platform);
+    //obj.physics.add.collider(player, platform1);
+    //obj.physics.add.collider(player, platform3);
+
+    //Temp ghost jumps
+    //obj.physics.add.collider(player, ghostJumpSpot);
+
+    //Temp buttons
+    obj.physics.add.collider(player, tempButtonP1);
+    obj.physics.add.collider(player, tempButtonP2);
+
+    //Temp gates 
+    obj.physics.add.collider(player, tempGate);
+
+
+}
+
+
+function buildLevel_2(obj)
+{
+  //platforms
+  var platform = obj.physics.add.sprite(150, 550, 'asd');
+  platform.body.allowGravity = false;
+  platform.body.immovable = true;
+  platform.body.setFriction(1);
+  platform.setDisplaySize(300, 25);
+
+  //var platform1 = obj.physics.add.sprite(650, 550, 'asd'); //world space
+  //platform1.body.allowGravity = false;
+  //platform1.body.immovable = true;
+ // platform1.body.setFriction(1);
+ // platform1.setDisplaySize(300, 25); //size  
+
+  var platform3 = obj.physics.add.sprite(900, 550, 'asd');
+  platform3.body.allowGravity = false;
+  platform3.body.immovable = true;
+  platform3.body.setFriction(1);
+  platform3.setDisplaySize(800, 20);
+  
+  //temp buttons
+  var tempButtonP1 = obj.physics.add.sprite(60, 525, 'asd'); //world space
+  tempButtonP1.body.allowGravity = false;
+  tempButtonP1.body.immovable = true;
+  tempButtonP1.body.setFriction(1);
+  tempButtonP1.setDisplaySize(30, 20); //size  
+  var tempButtonP2 = obj.physics.add.sprite(60, 520, 'asd'); //world space
+  tempButtonP2.body.allowGravity = false;
+  tempButtonP2.body.immovable = true;
+  tempButtonP2.body.setFriction(1);
+  tempButtonP2.setDisplaySize(50, 15); //size  
+
+    //temp gates
+    var tempGate = obj.physics.add.sprite(700, 260, 'asd');
+    tempGate.body.allowGravity = false;
+    tempGate.body.immovable = true;
+    tempGate.body.setFriction(1);
+    tempGate.setDisplaySize(20, 550);
+
+    //temp wall 
+    var tempWall = obj.physics.add.sprite(700, 460, 'asd');
+    tempWall.body.allowGravity = false;
+    tempWall.body.immovable = true;
+    tempWall.body.setFriction(1);
+    tempWall.setDisplaySize(40, 150);
+
+
+  //Temp ghost jump spots
+  var ghostJumpSpot = obj.physics.add.sprite(400, 580, 'asd'); 
+  ghostJumpSpot.body.allowGravity = false;
+  ghostJumpSpot.body.immovable = true;
+  ghostJumpSpot.body.setFriction(1);
+  ghostJumpSpot.setDisplaySize(50, 20);
+
+  var ghostJumpSpot_1 = obj.physics.add.sprite(630, 470, 'asd'); 
+  ghostJumpSpot_1.body.allowGravity = false;
+  ghostJumpSpot_1.body.immovable = true;
+  ghostJumpSpot_1.body.setFriction(1);
+  ghostJumpSpot_1.setDisplaySize(50, 20);
+
+     //Temp buttons
+     obj.physics.add.collider(player, tempButtonP1);
+     obj.physics.add.collider(player, tempButtonP2);
+
+    //Temp gates 
+    obj.physics.add.collider(player, tempGate);
+
+    //Temp walls 
+    obj.physics.add.collider(player, tempWall);
+
+
+  //platforms
+  obj.physics.add.collider(player, platform);
+  //obj.physics.add.collider(player, platform1);
+  obj.physics.add.collider(player, platform3);
+
+  //Temp ghost jumps
+  obj.physics.add.collider(player, ghostJumpSpot);
+  obj.physics.add.collider(player, ghostJumpSpot_1);
+}
+
+function buildLevel_3(obj)
+{
+//temp platforms
+var platform = obj.physics.add.sprite(1000, 300, 'asd');
+platform.body.allowGravity = false;
+platform.body.immovable = true;
+platform.body.setFriction(1);
+platform.setDisplaySize(900, 25);
+
+var platform_1 = obj.physics.add.sprite(650, 550, 'asd');
+platform_1.body.allowGravity = false;
+platform_1.body.immovable = true;
+platform_1.body.setFriction(1);
+platform_1.setDisplaySize(1300, 25);
+
+//temp buttons
+var tempButtonP1 = obj.physics.add.sprite(600, 525, 'asd'); //world space
+tempButtonP1.body.allowGravity = false;
+tempButtonP1.body.immovable = true;
+tempButtonP1.body.setFriction(1);
+tempButtonP1.setDisplaySize(30, 20); //size  
+var tempButtonP2 = obj.physics.add.sprite(600, 520, 'asd'); //world space
+tempButtonP2.body.allowGravity = false;
+tempButtonP2.body.immovable = true;
+tempButtonP2.body.setFriction(1);
+tempButtonP2.setDisplaySize(50, 15); //size  
+
+
+//temp wall 
+var tempWall = obj.physics.add.sprite(750, 420, 'asd');
+tempWall.body.allowGravity = false;
+tempWall.body.immovable = true;
+tempWall.body.setFriction(1);
+tempWall.setDisplaySize(40, 230);
+
+//Temp ghost jump spots
+
+//platforms
+obj.physics.add.collider(player, platform);
+obj.physics.add.collider(player, platform_1);
+//obj.physics.add.collider(player, platform3);
+
+//Temp ghost jumps
+//obj.physics.add.collider(player, ghostJumpSpot);
+
+//Temp buttons
+obj.physics.add.collider(player, tempButtonP1);
+obj.physics.add.collider(player, tempButtonP2);
+
+
+  //Temp walls 
+  obj.physics.add.collider(player, tempWall);
+
 }
