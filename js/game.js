@@ -131,7 +131,7 @@ var game = new Phaser.Game(config);
 
  
 function preload() {
-    this.load.path = 'Assets/';
+    this.load.path = 'assets/';
 
     //player anims preload:
     for(i = 1; i <= 79; i++)
@@ -197,6 +197,7 @@ function create() {
     // Setting world bounds manually
     this.physics.world.bounds.width = 1300;
     this.physics.world.bounds.height = 700;
+    this.add.rectangle(0, 0, 1300*2, 700*2, 0x3c485c);
 
 
 
@@ -206,7 +207,7 @@ function create() {
     // Create player
     player = this.physics.add.sprite(200, 200, 'player');//
     player.play('falling');
-    player.setSize(150,250);
+    player.setSize(65,85);
     player.setDisplaySize(100, 100);
     player.setDepth(1000);
 
