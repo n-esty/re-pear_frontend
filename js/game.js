@@ -207,6 +207,7 @@ function create() {
     player.play('falling');
     player.setSize(150,250);
     player.setDisplaySize(100, 100);
+    player.setDepth(1000);
 
     player.setCollideWorldBounds(true); // don't go out of the map
     cursors = this.input.keyboard.createCursorKeys();
