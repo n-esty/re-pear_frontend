@@ -24,10 +24,13 @@ var ghostLimit = false;
 var hasJumpedInAir = false;
 var canJump = true;
 var buttonActivationRadius = 50;
+var bombPickupRadius = 75;
 //arrays for buttons and doors n shite:
 var buttons = [];
 var doors = [];
 var buttonStates = [];
+//bombs:
+var bombs = [];
 
 //Set join data from url
 if(window.location.hash){
@@ -82,6 +85,8 @@ socket.on('ghosts', function(ghostData){
                 ghostPos[ghosts[i][0]].frameIndex = ghosts[i][1].animFrame - 1;
                 ghostPos[ghosts[i][0]].x = tempCoords[0];
                 ghostPos[ghosts[i][0]].y = tempCoords[1];
+                ghostPos[ghosts[i][0]].isInteracting = ghosts[i][1].isInteracting;
+                ghostPos[ghosts[i][0]].isThrowing = ghosts[i][1].isThrowing;
             }
         }
     }
@@ -132,7 +137,7 @@ var game = new Phaser.Game(config);
  
 function preload() {
     this.load.path = 'assets/';
-
+    this.load.image("bomb", "bomb.png");
     //player anims preload:
     for(i = 1; i <= 79; i++)
     {
@@ -215,11 +220,20 @@ function create() {
     cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+    keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
 
     buildLevel_0(this);
     //buildLevel_1(this); 
     //buildLevel_2(this); 
     //buildLevel_3(this);
+
+    var bombsprite = this.physics.add.sprite(250,500, 'bomb');
+    bombsprite.body.allowGravity = false;
+    bombsprite.body.immovable = true;
+    bombsprite.setDepth(2000);
+    var bombobj = {sprite: bombsprite, posx: 250, posy: 500, fusetime: 2, throwspeed: 10, isgrabbed: false};
+    bombs.push(bombobj);
 
     
     var btn1 = this.physics.add.sprite(100, 525, '');
@@ -344,6 +358,16 @@ function update()
             doors[i].sprite.y = doors[i].startY;
             doors[i].speed = doors[i].startspeed;
         }
+        for(i = 0; i < bombs.length; i++)
+        {
+            bombs[i].sprite.x = bombs[i].posx;
+            bombs[i].sprite.y = bombs[i].posy;
+            bombs[i].sprite.body.setVelocity(0,0);
+            bombs[i].sprite.body.immovable = true;
+            bombs[i].sprite.body.allowGravity= false;
+            bombs[i].isgrabbed = false;
+        }
+        
     }
         
     // Constantly send player data to server
@@ -351,7 +375,8 @@ function update()
     playerData.coords = [player.x,player.y];
     playerData.anim = player.anims.currentAnim;
     playerData.animFrame = player.anims.currentFrame.index;
-    playerData.isInteracting = false;
+    playerData.isInteracting = keyE.isDown;
+    playerData.isThrowing = keyW.isDown;
     playerData.flipX = player.flipX;
     socket.emit('player move', playerData);
 
@@ -365,6 +390,55 @@ function update()
             ghost[i].play(ghostPos[i].anim.key + "_ghost");
             ghost[i].anims.setCurrentFrame(ghost[i].anims.currentAnim.frames[ghostPos[i].frameIndex])
             ghost[i].setFlipX(ghostPos[i].flipX);
+        }
+    }
+    
+    checkBombPickup(this);
+}
+
+function checkBombPickup(obj)
+{
+    for(i = 0; i < bombs.length; i++)
+    {
+        //check player pickup
+        if(keyE.isDown && player.x > bombs[i].sprite.x-bombPickupRadius/2 && player.x < bombs[i].sprite.x+bombPickupRadius/2 &&player.y > bombs[i].sprite.y-bombPickupRadius/2 && player.y < bombs[i].sprite.y+bombPickupRadius/2 )
+        {
+            bombs[i].isgrabbed = true;
+            bombs[i].grabber = player;
+        }
+        //check ghost pickup
+        for(j = 0; j < gToggled; j++)
+        {
+            if(ghostPos[j])
+            {
+                if(ghostPos[j].isInteracting && ghost[j].x > bombs[i].sprite.x-bombPickupRadius/2 && ghost[j].x < bombs[i].sprite.x+bombPickupRadius/2 && ghost[j].y > bombs[i].sprite.y-bombPickupRadius/2 && ghost[j].y < bombs[i].sprite.y+bombPickupRadius/2)
+                {
+                    bombs[i].isgrabbed = true;
+                    bombs[i].grabber = ghost[j];
+                }
+            }
+        }
+        if(bombs[i].isgrabbed)
+        {
+            if(keyW.isDown && bombs[i].grabber == player)
+            {
+                bombs[i].sprite.body.allowGravity = true;
+                bombs[i].sprite.body.immovable = false;
+                bombs[i].isgrabbed = false;
+                if(player.flipX)
+                {
+                    bombs[i].sprite.body.setVelocity(-300, -500);
+                }
+                else
+                {
+                    bombs[i].sprite.body.setVelocity(300, -500);
+                }
+            }
+            else
+            {
+                bombs[i].sprite.x = bombs[i].grabber.x;
+                bombs[i].sprite.y = bombs[i].grabber.y-55;
+            }
         }
     }
 }
@@ -485,6 +559,10 @@ function airMove()
 
 function groundMove()
 {
+    if(player.body.onFloor())
+    {
+        socket.emit('reset', false);
+    }
     hasJumpedInAir = false;
     if (cursors.left.isDown)
     {
