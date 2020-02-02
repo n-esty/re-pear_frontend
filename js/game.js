@@ -15,7 +15,15 @@ var groundMoveSpeed = 250;
 var airMoveSpeed = 130;
 var jumpHeight = 400;
 var grav = 900;
+var ghostHitboxSize = 100;
 var ghostLimit = false;
+var hasJumpedInAir = false;
+var canJump = true;
+var buttonActivationRadius = 50;
+//arrays for buttons and doors n shite:
+var buttons = [];
+var doors = [];
+var buttonStates = [];
 
 //Set join data from url
 if(window.location.hash){
@@ -55,7 +63,7 @@ socket.on('reset', function(data){
 socket.on('ghosts', function(ghostData){
     // Checks if ghost belongs to player
     if(ghostData.player == clientId){
-        console.log(ghostData)
+        //console.log(ghostData)
         // Loop through all ghosts
         for(i=0;i<ghostData.amount;i++){
             var ghosts = ghostData.ghostBundle;
@@ -213,14 +221,45 @@ function create() {
     cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
 
-    //buildLevel_0(this);
+    buildLevel_0(this);
     //buildLevel_1(this); 
-    buildLevel_2(this); 
-    buildLevel_3(this); 
+    //buildLevel_2(this); 
+    //buildLevel_3(this);
+
+    
+    var btn1 = this.physics.add.sprite(100, 525, '');
+    btn1.body.allowGravity = false;
+    btn1.body.immovable = true;
+    buttons.push(btn1);
+
+    var doorsprite1 = this.physics.add.sprite(100, 400, '')
+    doorsprite1.body.allowGravity = false;
+    doorsprite1.body.immovable = true;
+    doorsprite1.setDisplaySize(200, 50);
+    this.physics.add.collider(player, doorsprite1);
+    
+    var door1 = {sprite: doorsprite1, startX: 100, startY: 400, endX: 500, endY: 100, platform: true, speed: 2, startspeed: 2, closedelay: -1};
+    doors.push(door1);
+
+    var btn2 = this.physics.add.sprite(300, 525, '');
+    btn2.body.allowGravity = false;
+    btn2.body.immovable = true;
+    buttons.push(btn2);
+
+    var doorsprite2= this.physics.add.sprite(500, 400, '')
+    doorsprite2.body.allowGravity = false;
+    doorsprite2.body.immovable = true;
+    doorsprite2.setDisplaySize(30, 300);
+    this.physics.add.collider(player, doorsprite2);
+    
+    var door2 = {sprite: doorsprite2, startX: 500, startY: 400, endX: 500, endY: 600, platform: false, speed: 2, startspeed: 2, closedelay: 20};
+    doors.push(door2);
+
 }
 
 function update() 
 {
+    //movement
     if(!player.body.touching.down && !player.body.onFloor())
     {
         airMove();
@@ -229,7 +268,19 @@ function update()
     {
         groundMove();
     }
+    if(cursors.space.isDown)
+    {
+        canJump = false;
+    }
+    if(cursors.space.isUp)
+    {
+        canJump = true;
+    }
+
+    checkButtons(this);
+    updateDoors(this);
     
+    //reset
     if(keyA.isDown && Date.now()>lastReset+500)
     {
         socket.emit('reset', []);
@@ -263,6 +314,12 @@ function update()
         // Reset player
         player.x = 0;
         player.y = 0;
+        for(i = 0; i < doors.length; i++)
+        {
+            doors[i].sprite.x = doors[i].startX;
+            doors[i].sprite.y = doors[i].startY;
+            doors[i].speed = doors[i].startspeed;
+        }
         
     }
         
@@ -285,6 +342,85 @@ function update()
             ghost[i].play(ghostPos[i].anim.key + "_ghost");
             ghost[i].anims.setCurrentFrame(ghost[i].anims.currentAnim.frames[ghostPos[i].frameIndex])
             ghost[i].setFlipX(ghostPos[i].flipX);
+        }
+    }
+}
+
+function checkButtons(obj)
+{
+    for(i = 0; i < buttons.length; i++)
+    {
+        var btnIsActive = false;
+        //check if player collides with button:
+        if((player.body.touching.down || player.body.onFloor()) && player.x > buttons[i].x-buttonActivationRadius/2 && player.x < buttons[i].x+buttonActivationRadius/2 && player.y > buttons[i].y-buttonActivationRadius*2 && player.y < buttons[i].y-buttonActivationRadius/2)
+        {
+            btnIsActive = true;
+        }
+        //check if something spoopy is going on
+        for(j = 0; j < ghost.length; j++)
+        {
+            if(ghost[j].x > buttons[i].x-buttonActivationRadius/2 && ghost[j].x < buttons[i].x+buttonActivationRadius/2 && ghost[j].y > buttons[i].y-buttonActivationRadius*2 && ghost[j].y < buttons[i].y-buttonActivationRadius/2)
+            {
+                btnIsActive = true;
+            }
+        }
+
+        if(btnIsActive)
+        {
+            buttonStates[i] = true;
+        }
+        else
+        {
+            buttonStates[i] = false;
+        }
+    }
+}
+
+function updateDoors(obj)
+{
+    for(i = 0; i < buttons.length; i++)
+    {
+        if(buttonStates[i])
+        {
+            //calculate xy delta:
+            var xD = doors[i].endX-doors[i].startX;
+            var yD = doors[i].endY-doors[i].startY;
+            //normalize delta:
+            var nXD = xD/ Math.sqrt(xD*xD+yD*yD);
+            var nYD = yD/ Math.sqrt(xD*xD+yD*yD);
+            
+            if(doors[i].platform)
+            {
+                if(((doors[i].sprite.x - doors[i].startX)*(doors[i].sprite.x - doors[i].endX)) > 0 || ((doors[i].sprite.y - doors[i].startY)*(doors[i].sprite.y - doors[i].endY) > 0))
+                {
+                   doors[i].speed *=-1;
+                }
+                doors[i].sprite.x+=doors[i].speed*nXD;
+                doors[i].sprite.y+=doors[i].speed*nYD;
+            }
+            else
+            {
+                if(doors[i].closedelayElapsed <= doors[i].closedelay)
+                {
+                    doors[i].sprite.x = doors[i].endX;
+                    doors[i].sprite.y = doors[i].endY;
+                    doors[i].closedelayElapsed++;
+                }
+                else
+                {
+                    doors[i].sprite.x = doors[i].startX;
+                    doors[i].sprite.y = doors[i].startY;
+                }
+            }
+        }
+        else
+        {
+            if(!doors[i].platform)
+            {
+                doors[i].closedelayElapsed = 0;
+                doors[i].sprite.x = doors[i].startX;
+                doors[i].sprite.y = doors[i].startY;
+            }
         }
     }
 }
@@ -316,10 +452,17 @@ function airMove()
         player.setFlipX(false);
         player.body.setVelocityX(airMoveSpeed);
     }
+    if(checkGhostCollision({x: player.x, y: player.y}) && cursors.space.isDown && canJump && !hasJumpedInAir)
+    {
+        player.body.setVelocityY(-jumpHeight);
+        player.play("jump");
+        hasJumpedInAir = true;
+    }
 }
 
 function groundMove()
 {
+    hasJumpedInAir = false;
     if (cursors.left.isDown)
     {
         player.body.setVelocityX(-groundMoveSpeed);
@@ -332,7 +475,7 @@ function groundMove()
     else if (cursors.right.isDown)
     {
         player.body.setVelocityX(groundMoveSpeed);
-        player.setFlipX(false);
+        player.setFlipX(false); 
         if(player.anims.getCurrentKey() != "run")
         {
             player.play("run");
@@ -340,7 +483,7 @@ function groundMove()
     }
     else
     {
-        if(player.anims.getCurrentKey() == "falling")
+        if(player.anims.getCurrentKey() == "falling" || player.anims.getCurrentKey() == "fall")
         {
             player.play("bounce");
         }
@@ -354,11 +497,24 @@ function groundMove()
         }
         player.body.velocity.x = player.body.velocity.x*.1;
     }
-    if (cursors.space.isDown || cursors.up.isDown)
+    if (cursors.space.isDown && canJump)
     {
         player.body.setVelocityY(-jumpHeight);
         player.play("jump");
     }
+}
+
+function checkGhostCollision(pos)
+{
+    for(i = 0; i < ghost.length; i++)
+    {
+        var gp = {x: ghost[i].x, y: ghost[i].y};
+        if(pos.x > gp.x-ghostHitboxSize/2 && pos.x < gp.x+ghostHitboxSize/2 && pos.y > gp.y-ghostHitboxSize/2 && pos.y < gp.y+ghostHitboxSize/2)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 function createPlayerAnims(obj)
