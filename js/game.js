@@ -219,11 +219,27 @@ function create() {
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
 
-    //buildLevel_0(this);
-    //buildLevel_1(this); 
-    //buildLevel_2(this); 
-    //buildLevel_3(this); 
-    buildLevel_4(this);
+    switch(level){
+        case 0:
+        case "0":
+            buildLevel_0(this);
+            break;
+        case 1:
+        case "1":
+            buildLevel_1(this);
+            break;
+        case 2:
+        case "2":
+            buildLevel_2(this);
+            break;
+        case 3:
+        case "3":
+            buildLevel_4(this);
+            break;
+        default:
+            buildLevel_0(this);
+            break;
+    }
 
     var doorsprite1 = this.physics.add.sprite(100, 400, '')
     doorsprite1.body.allowGravity = false;
