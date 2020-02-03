@@ -142,6 +142,7 @@ var game = new Phaser.Game(config);
 function preload() {
     this.load.path = 'assets/';
     this.load.image("bomb", "bomb.png");
+    this.load.image("bomb", "grey.jpg");
     //player anims preload:
     for(i = 1; i <= 79; i++)
     {
@@ -249,25 +250,12 @@ function create() {
             break;
     }
     
-        var bombsprite = this.physics.add.sprite(250,500, 'bomb');
+    var bombsprite = this.physics.add.sprite(250,500, 'bomb');
     bombsprite.body.allowGravity = false;
     bombsprite.body.immovable = true;
     bombsprite.setDepth(2000);
     var bombobj = {sprite: bombsprite, posx: 250, posy: 500, fusetime: 2, throwspeed: 10, isgrabbed: false};
     bombs.push(bombobj);
-
-    
-    var btn1 = this.physics.add.sprite(100, 525, '');
-    btn1.body.allowGravity = false;
-    btn1.body.immovable = true;
-    buttons.push(btn1);
-
-    var doorsprite1 = this.physics.add.sprite(100, 400, '')
-    doorsprite1.body.allowGravity = false;
-    doorsprite1.body.immovable = true;
-    doorsprite1.setDisplaySize(200, 50);
-    this.physics.add.collider(player, doorsprite1);
-    
     
     socket.emit('reset', false);
 }
