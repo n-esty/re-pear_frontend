@@ -142,7 +142,7 @@ var game = new Phaser.Game(config);
 function preload() {
     this.load.path = 'assets/';
     this.load.image("bomb", "bomb.png");
-    this.load.image("bomb", "grey.jpg");
+    this.load.image("asd", "grey.jpg");
     //player anims preload:
     for(i = 1; i <= 79; i++)
     {
